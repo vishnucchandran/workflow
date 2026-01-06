@@ -151,12 +151,24 @@ function renderUploads() {
     });
 }
 
-// Drag & Drop Interaction
+// Drag & Drop & Click Interaction
 function initDragDrop() {
     const dropZone = document.getElementById('drop-zone');
+    // Using querySelector to find the input we just added in the associated HTML update
+    // Note: The HTML update added <input type="file" id="file-input">
+    const fileInput = document.getElementById('file-input');
 
+    // Check if input exists (safety measure)
+    if (!fileInput) {
+        console.error("File input not found");
+        return;
+    }
+
+    // Prevent default browser behavior for drag/drop
     ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-        dropZone.addEventListener(eventName, preventDefaults, false);
+        // We attach to body to prevent default behavior everywhere, 
+        // ensuring dropping a file outside the zone doesn't open it.
+        document.body.addEventListener(eventName, preventDefaults, false);
     });
 
     function preventDefaults(e) {
@@ -164,6 +176,7 @@ function initDragDrop() {
         e.stopPropagation();
     }
 
+    // Highlight drop zone
     ['dragenter', 'dragover'].forEach(eventName => {
         dropZone.addEventListener(eventName, highlight, false);
     });
@@ -182,20 +195,49 @@ function initDragDrop() {
         dropZone.style.backgroundColor = 'transparent';
     }
 
+    // Handle Dropped Files
     dropZone.addEventListener('drop', handleDrop, false);
 
     function handleDrop(e) {
         const dt = e.dataTransfer;
         const files = dt.files;
+        handleFiles(files);
+    }
 
-        // Mock upload
+    // Handle Click to Browse
+    dropZone.addEventListener('click', () => {
+        fileInput.click();
+    });
+
+    fileInput.addEventListener('change', function () {
+        handleFiles(this.files);
+    });
+
+    function handleFiles(files) {
         if (files.length > 0) {
-            recentUploads.unshift({
-                name: files[0].name,
-                size: (files[0].size / 1024 / 1024).toFixed(1) + " MB"
+            // Convert FileList to Array
+            ([...files]).forEach(file => {
+                uploadFile(file);
             });
-            renderUploads();
         }
+    }
+
+    function uploadFile(file) {
+        // Mock simple upload simulation
+        // Add to list immediately with a "Uploading..." state
+        recentUploads.unshift({
+            name: file.name,
+            size: "Uploading..."
+        });
+        renderUploads();
+
+        // Simulate network delay
+        setTimeout(() => {
+            // Update the first item (since we unshifted)
+            const item = recentUploads.find(u => u.name === file.name);
+            if (item) item.size = (file.size / 1024 / 1024).toFixed(1) + " MB";
+            renderUploads();
+        }, 1200);
     }
 }
 
