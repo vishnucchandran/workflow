@@ -1,11 +1,6 @@
-/**
- * Workflow App - Functional v1.0
- * Features: Auth, Project CRUD, LocalStorage Persistence, Drag&Drop
- */
-
-// --- Data Store (Local Storage Mock for now) ---
+// --- Enhanced Data Store ---
 const Store = {
-    getKey: (key) => `flow_app_${key}`,
+    getKey: (key) => `flow_app_v2_${key}`,     // New version namespace
 
     get: (key, defaultVal) => {
         const data = localStorage.getItem(Store.getKey(key));
@@ -16,21 +11,29 @@ const Store = {
         localStorage.setItem(Store.getKey(key), JSON.stringify(value));
     },
 
-    // Mock generic "Users"
-    login: (email, password) => {
-        // In a real app, this hits Firebase Auth
-        if (email && password) {
-            const user = {
-                id: 'u_' + Date.now(),
-                name: 'Alex D.',
-                email: email,
-                role: 'Snr. Designer',
-                avatar: 'AD'
-            };
-            Store.set('user', user);
-            return user;
+    // Mock Auth
+    login: (method, credential) => {
+        let user = {
+            id: 'u_' + Date.now(),
+            name: 'Alex D.',
+            role: 'Snr. Designer',
+            avatar: 'AD',
+            email: 'demo@flow.com',
+            bio: 'Creative director with 5+ years of experience.',
+            age: 28
+        };
+
+        if (method === 'google') {
+            user.name = "Google User";
+            user.email = "user@gmail.com";
+        } else if (method === 'phone') {
+            user.name = "Mobile User";
+            user.phone = credential;
         }
-        return null;
+
+        // Save session
+        Store.set('user', user);
+        return user;
     },
 
     logout: () => {
@@ -40,85 +43,50 @@ const Store = {
 
     getCurrentUser: () => {
         return Store.get('user', null);
+    },
+
+    updateProfile: (data) => {
+        const user = Store.getCurrentUser();
+        if (user) {
+            const updated = { ...user, ...data };
+            Store.set('user', updated);
+            return updated;
+        }
+        return null;
     }
 };
-
-// --- Mock Data Seeds ---
-const defaultProjects = [
-    {
-        id: 1729000,
-        title: "Branding for 'Aura'",
-        client: "Aura Systems",
-        deadline: "Today",
-        deadlineStatus: "urgent",
-        currentStage: 3,
-        stages: ["Ideation", "Design", "Revision", "Delivery"]
-    },
-    {
-        id: 1729001,
-        title: "Marketing Website Redesign",
-        client: "Elevate Inc.",
-        deadline: "2026-01-08",
-        deadlineStatus: "warning",
-        currentStage: 1,
-        stages: ["Ideation", "Design", "Dev Handoff", "Launch"]
-    }
-];
-
-const defaultFeedback = [
-    {
-        id: 1,
-        author: "Sarah L.",
-        avatarColor: "#FF9A9E",
-        project: "Branding for 'Aura'",
-        time: "1h ago",
-        message: "Love the initial concepts! Can we explore a warmer color palette for option 2?",
-        type: "approval"
-    },
-    {
-        id: 2,
-        author: "Mike R.",
-        avatarColor: "#a18cd1",
-        project: "Website Redesign",
-        time: "3h ago",
-        message: "Header looks great. The font size on mobile needs a tweak.",
-        type: "comment"
-    },
-    {
-        id: 3,
-        author: "Elena G.",
-        avatarColor: "#84fab0",
-        project: "Social Media Kit",
-        time: "5h ago",
-        message: "Please include the raw files in the next drop.",
-        type: "request"
-    }
-];
 
 // --- App State ---
 const App = {
     projects: [],
-    feedback: [],
-    uploads: [],
+    clients: [],
+    uploads: [], // define uploads here
     user: null,
 
     init: () => {
-        // Load Data
-        App.projects = Store.get('projects', defaultProjects);
-        App.feedback = Store.get('feedback', defaultFeedback);
-        App.uploads = Store.get('uploads', []);
+        // Load data
+        App.projects = Store.get('projects', mockProjects());
+        App.clients = Store.get('clients', []);
+        App.uploads = Store.get('uploads', []); // load uploads
         App.user = Store.getCurrentUser();
 
-        // Check Auth
         if (!App.user) {
             UI.showLogin();
         } else {
             UI.hideLogin();
             UI.renderAll();
+            UI.updateProfileUI(App.user);
+            // Default view to dashboard
+            Router.navigate('dashboard');
         }
 
-        // Listeners
         Events.init();
+    },
+
+    addClient: (clientData) => {
+        App.clients.push({ id: Date.now(), ...clientData });
+        Store.set('clients', App.clients);
+        UI.renderClients();
     },
 
     createProject: (data) => {
@@ -129,14 +97,14 @@ const App = {
             deadline: data.deadline,
             deadlineStatus: data.priority,
             currentStage: 0,
-            stages: ["Ideation", "Design", "Revision", "Delivery"] // Default workflow
+            stages: ["Ideation", "Design", "Revision", "Delivery"]
         };
         App.projects.unshift(newProject);
         Store.set('projects', App.projects);
         UI.renderProjects();
-        return newProject;
     },
 
+    // Add these methods back
     updateProjectStage: (id, stageIndex) => {
         const p = App.projects.find(p => p.id == id);
         if (p) {
@@ -153,46 +121,110 @@ const App = {
     }
 };
 
+// --- Mock Data ---
+function mockProjects() {
+    return [
+        { id: 1, title: "Branding for 'Aura'", client: "Aura Systems", deadline: "Today", deadlineStatus: "urgent", currentStage: 3, stages: ["Ideation", "Design", "Revision", "Delivery"] },
+        { id: 2, title: "Website Redesign", client: "Elevate Inc", deadline: "2 Days left", deadlineStatus: "warning", currentStage: 1, stages: ["Ideation", "Design", "Dev", "Launch"] }
+    ];
+}
+
+// --- Router ---
+const Router = {
+    navigate: (viewId) => {
+        // Hide all views
+        document.querySelectorAll('.view-section').forEach(el => el.style.display = 'none');
+        document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+
+        // Show target
+        const target = document.getElementById(`view-${viewId}`);
+        if (target) target.style.display = 'block';
+
+        // Activate nav
+        const navItem = document.querySelector(`.nav-item[data-view="${viewId}"]`);
+        if (navItem) navItem.classList.add('active');
+
+        // Render Refresh
+        if (viewId === 'dashboard') UI.renderProjects();
+        if (viewId === 'clients') UI.renderClients();
+        if (viewId === 'profile' && App.user) UI.fillProfileForm();
+
+        // Mobile: Close sidebar if open
+        document.getElementById('sidebar').classList.remove('open');
+    }
+};
+
 // --- UI Manager ---
 const UI = {
     elements: {
-        projectList: document.getElementById('project-list'),
-        feedbackList: document.getElementById('feedback-list'),
-        uploadList: document.getElementById('recent-uploads'),
         loginOverlay: document.getElementById('login-overlay'),
-        newProjectDialog: document.getElementById('new-project-modal'),
-        editProjectDialog: document.getElementById('edit-project-modal')
+        sidebar: document.getElementById('sidebar'),
+        mobileBtn: document.getElementById('mobile-menu-btn'),
+        newProjectDialog: document.getElementById('new-project-modal'), // define these
+        editProjectDialog: document.getElementById('edit-project-modal'), // define these
+        uploadList: document.getElementById('recent-uploads') // define
     },
 
-    showLogin: () => {
-        UI.elements.loginOverlay.style.display = 'flex';
-    },
-
-    hideLogin: () => {
-        UI.elements.loginOverlay.style.display = 'none';
-    },
+    showLogin: () => UI.elements.loginOverlay.style.display = 'flex',
+    hideLogin: () => UI.elements.loginOverlay.style.display = 'none',
 
     renderAll: () => {
         UI.renderProjects();
-        UI.renderFeedback();
-        UI.renderUploads();
+        UI.renderClients();
+        UI.renderUploads(); // render uploads
+    },
+
+    updateProfileUI: (user) => {
+        const nameEl = document.getElementById('nav-name');
+        const avatarEl = document.getElementById('nav-avatar');
+        if (nameEl) nameEl.textContent = user.name;
+
+        if (avatarEl) {
+            avatarEl.textContent = user.avatarUrl ? '' : (user.name ? user.name.charAt(0) : 'U');
+            if (user.avatarUrl) {
+                avatarEl.style.backgroundImage = `url(${user.avatarUrl})`;
+                avatarEl.style.backgroundSize = 'cover';
+                avatarEl.style.color = 'transparent';
+            } else {
+                avatarEl.style.backgroundImage = 'none';
+                avatarEl.style.color = 'white';
+            }
+        }
+    },
+
+    fillProfileForm: () => {
+        const u = App.user;
+        if (!u) return;
+        document.getElementById('profile-name').value = u.name || '';
+        document.getElementById('profile-age').value = u.age || '';
+        document.getElementById('profile-role').value = u.role || '';
+        document.getElementById('profile-bio').value = u.bio || '';
+        document.getElementById('profile-avatar-url').value = u.avatarUrl || '';
+
+        // Preview
+        const preview = document.getElementById('profile-avatar-preview');
+        if (u.avatarUrl) {
+            preview.innerText = '';
+            preview.style.backgroundImage = `url(${u.avatarUrl})`;
+            preview.style.backgroundSize = 'cover';
+        } else {
+            preview.innerText = u.name ? u.name.charAt(0) : 'U';
+            preview.style.backgroundImage = 'none';
+        }
     },
 
     renderProjects: () => {
-        const container = UI.elements.projectList;
-        container.innerHTML = ' '; // Clear
-
+        const list = document.getElementById('project-list');
+        if (!list) return;
+        list.innerHTML = '';
         App.projects.forEach(project => {
             const card = document.createElement('div');
             card.className = 'project-card';
             card.dataset.id = project.id;
             card.onclick = (e) => {
-                // Prevent opening when clicking specific controls if we added them?
-                // For now, entire card opens edit modal
                 Events.openEditModal(project.id);
             };
 
-            // Calculate Visual Deadline
             let dateDisplay = project.deadline;
             // Simple date calc
             if (project.deadline !== "Today" && !project.deadline.includes("Days left")) {
@@ -220,6 +252,7 @@ const UI = {
                 `;
             }).join('');
 
+
             card.innerHTML = `
                 <div class="card-top">
                     <div class="project-title">
@@ -227,7 +260,7 @@ const UI = {
                         <span class="client-name">${project.client}</span>
                     </div>
                     <span class="deadline-tag ${project.deadlineStatus}">
-                        ${project.deadlineStatus === 'urgent' ? '🏁 ' : '⏱ '}${dateDisplay}
+                         ${project.deadlineStatus === 'urgent' ? '🏁 ' : '⏱ '}${dateDisplay}
                     </span>
                 </div>
                 <div class="timeline">
@@ -235,38 +268,35 @@ const UI = {
                         ${timelineHTML}
                     </div>
                 </div>
-            `;
-            container.appendChild(card);
+             `;
+            list.appendChild(card);
         });
     },
 
-    renderFeedback: () => {
-        const container = UI.elements.feedbackList;
-        container.innerHTML = '';
-        App.feedback.forEach(item => {
-            const div = document.createElement('div');
-            div.className = 'feedback-item';
-            div.innerHTML = `
-                <div class="avatar" style="background: ${item.avatarColor}; color: #fff;">${item.author.charAt(0)}</div>
-                <div class="feedback-content">
-                    <div class="feedback-header">
-                        <span class="author">${item.author}</span>
-                        <span class="time">${item.time}</span>
-                    </div>
-                    <div class="project-ref">${item.project}</div>
-                    <p class="message">${item.message}</p>
-                    <div class="feedback-actions">
-                        <button class="btn-xs btn-reply">Reply</button>
-                        ${item.type === 'approval' ? '<button class="btn-xs btn-approve">Approve</button>' : ''}
-                    </div>
-                </div>
+    renderClients: () => {
+        const list = document.getElementById('clients-list');
+        if (!list) return;
+        list.innerHTML = '';
+        if (App.clients.length === 0) {
+            list.innerHTML = '<p style="color:#999; grid-column:1/-1; text-align:center;">No clients yet. Add one!</p>';
+            return;
+        }
+
+        App.clients.forEach(c => {
+            const card = document.createElement('div');
+            card.className = 'client-card';
+            card.innerHTML = `
+                <h3>${c.name}</h3>
+                <span class="email">${c.email || 'No email'}</span>
+                <p class="notes">${c.notes || 'No notes'}</p>
             `;
-            container.appendChild(div);
+            list.appendChild(card);
         });
     },
 
     renderUploads: () => {
         const container = UI.elements.uploadList;
+        if (!container) return;
         container.innerHTML = '';
         App.uploads.forEach(file => {
             const li = document.createElement('li');
@@ -281,31 +311,125 @@ const UI = {
     }
 };
 
-// --- Events Manager ---
+// --- Events ---
 const Events = {
     init: () => {
-        // Login
-        document.getElementById('login-form').addEventListener('submit', (e) => {
-            e.preventDefault();
-            const inputs = e.target.querySelectorAll('input');
-            const user = Store.login(inputs[0].value, inputs[1].value);
-            if (user) App.init();
-        });
-
-        // Add Project Modal Controls
-        const newProjBtn = document.querySelector('.btn-primary'); // "+ New Project"
-        if (newProjBtn && newProjBtn.innerText.includes('New Project')) {
-            newProjBtn.onclick = () => UI.elements.newProjectDialog.showModal();
-        }
-
-        // Close Modals
-        document.querySelectorAll('.close-modal').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.target.closest('dialog').close();
+        // Navigation
+        document.querySelectorAll('.nav-item').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const view = e.currentTarget.getAttribute('data-view');
+                Router.navigate(view);
             });
         });
 
-        // Create Project Submit
+        // Mobile Menu
+        const mbBtn = document.getElementById('mobile-menu-btn');
+        if (mbBtn) {
+            mbBtn.addEventListener('click', () => {
+                document.getElementById('sidebar').classList.add('open');
+            });
+        }
+
+        const sbClose = document.getElementById('sidebar-close');
+        if (sbClose) {
+            sbClose.addEventListener('click', () => {
+                document.getElementById('sidebar').classList.remove('open');
+            });
+        }
+
+        // Auth
+        document.getElementById('login-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const inputs = e.target.querySelectorAll('input');
+            Store.login('email', { email: inputs[0].value });
+            App.init(); // Reload state
+        });
+
+        document.getElementById('login-google').addEventListener('click', () => {
+            // Simulate Google Login
+            setTimeout(() => {
+                Store.login('google');
+                App.init();
+            }, 800);
+        });
+
+        // Phone Auth Flow
+        const phStart = document.getElementById('login-phone-start');
+        const otpForm = document.getElementById('otp-form');
+        const loginForm = document.getElementById('login-form');
+
+        phStart.addEventListener('click', () => {
+            loginForm.style.display = 'none';
+            document.querySelector('.auth-buttons').style.display = 'none';
+            document.querySelector('.divider').style.display = 'none';
+            otpForm.style.display = 'block';
+        });
+
+        document.getElementById('send-otp-btn').addEventListener('click', () => {
+            const phone = document.getElementById('phone-number').value;
+            if (phone.length > 5) {
+                document.getElementById('otp-input-group').style.display = 'block';
+                document.getElementById('send-otp-btn').style.display = 'none';
+                document.getElementById('verify-otp-btn').style.display = 'block';
+                alert('OTP sent to ' + phone + ' (Use 123456)');
+            } else {
+                alert('Please enter a valid number');
+            }
+        });
+
+        document.getElementById('verify-otp-btn').addEventListener('click', (e) => {
+            e.preventDefault();
+            const otp = document.getElementById('otp-code').value;
+            if (otp === '123456') {
+                Store.login('phone', document.getElementById('phone-number').value);
+                App.init();
+            } else {
+                alert('Invalid OTP');
+            }
+        });
+
+        document.getElementById('back-to-login').addEventListener('click', () => {
+            // Reset UI manually or just reload for simplicity in demo
+            window.location.reload();
+        });
+
+
+        // Profile Save
+        document.getElementById('save-profile-btn').addEventListener('click', () => {
+            const form = document.getElementById('profile-form');
+            const data = {
+                name: form.querySelector('[name="name"]').value,
+                age: form.querySelector('[name="age"]').value,
+                role: form.querySelector('[name="role"]').value,
+                bio: form.querySelector('[name="bio"]').value,
+                avatarUrl: form.querySelector('[name="avatarUrl"]').value
+            };
+            const updatedUser = Store.updateProfile(data);
+            UI.updateProfileUI(updatedUser);
+            UI.fillProfileForm(); // Refresh preview
+            alert('Profile Saved!');
+        });
+
+        // Clients
+        document.getElementById('add-client-btn').addEventListener('click', () => {
+            document.getElementById('new-client-modal').showModal();
+        });
+
+        document.getElementById('new-client-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const fd = new FormData(e.target);
+            App.addClient(Object.fromEntries(fd.entries()));
+            document.getElementById('new-client-modal').close();
+            e.target.reset();
+        });
+
+        // Project Modals
+        const newProjBtn = document.getElementById('new-project-btn');
+        if (newProjBtn) {
+            newProjBtn.onclick = () => UI.elements.newProjectDialog.showModal();
+        }
+
         document.getElementById('new-project-form').addEventListener('submit', (e) => {
             e.preventDefault();
             const formData = new FormData(e.target);
@@ -314,7 +438,6 @@ const Events = {
             UI.elements.newProjectDialog.close();
         });
 
-        // Edit Project Submit
         document.getElementById('edit-project-form').addEventListener('submit', (e) => {
             e.preventDefault();
             const formData = new FormData(e.target);
@@ -324,7 +447,6 @@ const Events = {
             UI.elements.editProjectDialog.close();
         });
 
-        // Delete Project
         document.getElementById('delete-project-btn').addEventListener('click', () => {
             const id = document.querySelector('#edit-project-form input[name="id"]').value;
             if (confirm('Are you sure you want to delete this project?')) {
@@ -332,6 +454,11 @@ const Events = {
                 UI.elements.editProjectDialog.close();
             }
         });
+
+        // Clients Button override (remove old one)
+
+        // Modal Closers
+        document.querySelectorAll('.close-modal').forEach(btn => btn.onclick = (e) => e.target.closest('dialog').close());
 
         // Drag & Drop
         Events.initDragDrop();
@@ -344,7 +471,6 @@ const Events = {
         const form = document.getElementById('edit-project-form');
         form.querySelector('input[name="id"]').value = p.id;
 
-        // Select logic
         const radios = form.querySelectorAll('input[name="stage"]');
         radios.forEach(r => {
             if (r.value == p.currentStage) r.checked = true;
@@ -385,7 +511,6 @@ const Events = {
     },
 
     handleUpload: (file) => {
-        // Mock Upload
         const mockFile = {
             name: file.name,
             size: "Uploading..."
@@ -397,12 +522,11 @@ const Events = {
             const item = App.uploads.find(u => u.name === file.name);
             if (item) {
                 item.size = (file.size / 1024 / 1024).toFixed(1) + " MB";
-                Store.set('uploads', App.uploads); // Persist
+                Store.set('uploads', App.uploads);
                 UI.renderUploads();
             }
         }, 800);
     }
 };
 
-// Initialize
 document.addEventListener('DOMContentLoaded', App.init);

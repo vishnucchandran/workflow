@@ -13,9 +13,10 @@
 
 <body>
     <div class="app-container">
-        <aside class="sidebar">
+        <aside class="sidebar" id="sidebar">
             <div class="logo">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" class="brand-logo"
+                    xmlns="http://www.w3.org/2000/svg">
                     <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round"
                         stroke-linejoin="round" />
                     <path d="M2 17L12 22L22 17" stroke="currentColor" stroke-width="2" stroke-linecap="round"
@@ -24,111 +25,219 @@
                         stroke-linejoin="round" />
                 </svg>
                 <span>Flow</span>
+                <button class="mobile-close" id="sidebar-close"
+                    style="margin-left:auto; background:none; border:none; color:inherit; font-size:1.5rem; display:none;">×</button>
             </div>
             <nav class="nav-menu">
-                <a href="#" class="nav-item active">
+                <a href="#dashboard" class="nav-item active" data-view="dashboard">
                     <span class="icon">⊞</span> Dashboard
                 </a>
-                <a href="#" class="nav-item">
-                    <span class="icon">folder</span> Projects
-                </a>
-                <a href="#" class="nav-item">
-                    <span class="icon">image</span> Assets
-                </a>
-                <a href="#" class="nav-item">
+                <a href="#clients" class="nav-item" data-view="clients">
                     <span class="icon">users</span> Clients
                 </a>
-                <a href="#" class="nav-item">
-                    <span class="icon">settings</span> Settings
+                <a href="#profile" class="nav-item" data-view="profile">
+                    <span class="icon">user</span> Profile
                 </a>
             </nav>
-            <div class="user-profile">
-                <div class="avatar">AD</div>
+            <div class="user-profile" id="sidebar-profile-btn" style="cursor:pointer;">
+                <div class="avatar" id="nav-avatar">AD</div>
                 <div class="user-info">
-                    <span class="name">Alex D.</span>
-                    <span class="role">Snr. Designer</span>
+                    <span class="name" id="nav-name">Alex D.</span>
+                    <span class="role">Edit Profile</span>
                 </div>
             </div>
         </aside>
 
         <main class="main-content">
-            <header class="top-bar">
-                <h1>Overview</h1>
-                <div class="actions">
-                    <button class="btn-secondary">Filtered by: Active</button>
-                    <button class="btn-primary">+ New Project</button>
+            <button class="mobile-menu-btn" id="mobile-menu-btn"
+                style="display:none; position:fixed; top:20px; left:20px; z-index:90;">☰</button>
+
+            <!-- VIEW: DASHBOARD -->
+            <div id="view-dashboard" class="view-section active">
+                <header class="top-bar">
+                    <h1>Overview</h1>
+                    <div class="actions">
+                        <button class="btn-primary" id="new-project-btn">+ New Project</button>
+                    </div>
+                </header>
+
+                <div class="dashboard-grid">
+                    <!-- Project Section -->
+                    <section class="projects-section">
+                        <div class="section-header">
+                            <h2>Active Projects</h2>
+                        </div>
+                        <div class="project-cards-container" id="project-list">
+                            <!-- Projects injected via JS -->
+                        </div>
+                    </section>
+
+                    <aside class="right-panel">
+                        <!-- Asset Upload - Minimized for this view or kept -->
+                        <div class="card asset-upload">
+                            <div class="card-header">
+                                <h3>Quick Upload</h3>
+                            </div>
+                            <div class="drop-zone" id="drop-zone">
+                                <p>Drop assets here</p>
+                                <input type="file" id="file-input" style="display:none;">
+                            </div>
+                            <ul class="recent-uploads" id="recent-uploads"></ul>
+                        </div>
+                        <div class="card feedback-stream">
+                            <div class="card-header">
+                                <h3>Client Feedback</h3>
+                            </div>
+                            <div class="feedback-list" id="feedback-list"></div>
+                        </div>
+                    </aside>
                 </div>
-            </header>
+            </div>
 
-            <div class="dashboard-grid">
-                <!-- Project Section -->
-                <section class="projects-section">
-                    <div class="section-header">
-                        <h2>Active Projects</h2>
-                        <a href="#" class="view-all">View All</a>
-                    </div>
+            <!-- VIEW: CLIENTS -->
+            <div id="view-clients" class="view-section" style="display: none;">
+                <header class="top-bar">
+                    <h1>Clients</h1>
+                    <button class="btn-primary" id="add-client-btn">+ Add Client</button>
+                </header>
+                <div class="clients-grid" id="clients-list"
+                    style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 24px;">
+                    <!-- Clients injected here -->
+                </div>
+            </div>
 
-                    <div class="project-cards-container" id="project-list">
-                        <!-- Projects injected via JS -->
+            <!-- VIEW: PROFILE -->
+            <div id="view-profile" class="view-section" style="display: none;">
+                <header class="top-bar">
+                    <h1>My Profile</h1>
+                    <button class="btn-primary" id="save-profile-btn">Save Changes</button>
+                </header>
+                <div class="profile-container" style="max-width: 600px;">
+                    <div class="card profile-card" style="padding: 32px;">
+                        <div class="profile-header-edit"
+                            style="display:flex; align-items:center; gap:24px; margin-bottom:32px;">
+                            <div class="avatar-large" id="profile-avatar-preview"
+                                style="width:80px; height:80px; border-radius:50%; background:#ddd; display:flex; align-items:center; justify-content:center; font-size:2rem; color:inherit;">
+                                AD</div>
+                            <div>
+                                <button class="btn-secondary btn-sm" id="change-photo-btn">Change Photo URL</button>
+                            </div>
+                        </div>
+                        <form id="profile-form">
+                            <div class="form-group">
+                                <label>Photo URL</label>
+                                <input type="text" name="avatarUrl" id="profile-avatar-url" placeholder="https://...">
+                            </div>
+                            <div class="form-group">
+                                <label>Full Name</label>
+                                <input type="text" name="name" id="profile-name">
+                            </div>
+                            <div class="form-row" style="display:flex; gap:16px;">
+                                <div class="form-group" style="flex:1;">
+                                    <label>Age</label>
+                                    <input type="number" name="age" id="profile-age">
+                                </div>
+                                <div class="form-group" style="flex:2;">
+                                    <label>Role</label>
+                                    <input type="text" name="role" id="profile-role" placeholder="e.g. Senior Designer">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Bio</label>
+                                <textarea name="bio" id="profile-bio" rows="4"
+                                    style="width:100%; padding:12px; border:1px solid var(--border-color); border-radius:8px;"
+                                    placeholder="Tell us about yourself..."></textarea>
+                            </div>
+                        </form>
                     </div>
-                </section>
-
-                <aside class="right-panel">
-                    <!-- Asset Upload -->
-                    <div class="card asset-upload">
-                        <div class="card-header">
-                            <h3>Quick Upload</h3>
-                            <button class="icon-btn">•••</button>
-                        </div>
-                        <div class="drop-zone" id="drop-zone">
-                            <div class="upload-icon">cloud_upload</div>
-                            <p>Drag & drop assets here<br>or <span class="link">browse</span></p>
-                            <input type="file" id="file-input" multiple style="display: none;">
-                        </div>
-                        <ul class="recent-uploads" id="recent-uploads">
-                            <!-- Recent uploads injected via JS -->
-                        </ul>
-                    </div>
-
-                    <!-- Client Feedback -->
-                    <div class="card feedback-stream">
-                        <div class="card-header">
-                            <h3>Client Feedback</h3>
-                            <span class="badge">3 New</span>
-                        </div>
-                        <div class="feedback-list" id="feedback-list">
-                            <!-- Feedback injected via JS -->
-                        </div>
-                    </div>
-                </aside>
+                </div>
             </div>
         </main>
     </div>
-    <!-- Modals -->
 
+    <!-- Modals -->
     <!-- Login Overlay -->
     <div id="login-overlay" class="modal-overlay" style="display: flex;">
         <div class="login-card">
-            <div class="logo-large">
-                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M12 2L2 7L12 12L22 7L12 2Z"></path>
-                    <path d="M2 17L12 22L22 17"></path>
-                    <path d="M2 12L12 17L22 12"></path>
-                </svg>
-            </div>
+            <div class="logo-large" style="margin-bottom:16px; font-weight:bold; font-size:2rem;">Flow</div>
             <h2>Welcome Back</h2>
-            <p style="color: var(--text-secondary); margin-bottom: 24px;">Sign in to manage your workflow</p>
+            <p class="subtitle" style="color:var(--text-secondary); margin-bottom:24px;">Sign in to your professional
+                workspace</p>
+
+            <div class="auth-buttons" style="display:flex; flex-direction:column; gap:12px; margin-bottom:24px;">
+                <button class="btn-secondary" id="login-google"
+                    style="display:flex; align-items:center; justify-content:center; gap:8px;">
+                    <span class="icon">G</span> Continue with Google
+                </button>
+                <button class="btn-secondary" id="login-phone-start"
+                    style="display:flex; align-items:center; justify-content:center; gap:8px;">
+                    <span class="icon">📱</span> Continue with Phone
+                </button>
+            </div>
+
+            <div class="divider"
+                style="text-align:center; color:var(--text-secondary); margin-bottom:24px; font-size:0.8rem;">— OR —
+            </div>
+
             <form id="login-form">
                 <div class="form-group">
-                    <input type="email" placeholder="Email" value="demo@flow.com" required>
+                    <input type="email" placeholder="Email" value="demo@flow.com">
                 </div>
                 <div class="form-group">
-                    <input type="password" placeholder="Password" value="password" required>
+                    <input type="password" placeholder="Password" value="password">
                 </div>
-                <button type="submit" class="btn-primary" style="width: 100%; justify-content: center;">Sign In</button>
+                <button type="submit" class="btn-primary full-width" style="width:100%;">Sign In</button>
+            </form>
+
+            <!-- OTP Step (Hidden initially) -->
+            <form id="otp-form" style="display: none;">
+                <div class="form-group">
+                    <label>Enter Mobile Number</label>
+                    <input type="tel" id="phone-number" placeholder="+91 9999900000">
+                </div>
+                <div id="otp-input-group" style="display:none;">
+                    <div class="form-group">
+                        <label>Enter OTP</label>
+                        <input type="text" id="otp-code" placeholder="123456">
+                    </div>
+                </div>
+                <button type="button" class="btn-primary full-width" id="send-otp-btn"
+                    style="width:100%; margin-bottom:8px;">Send OTP</button>
+                <button type="submit" class="btn-primary full-width" id="verify-otp-btn"
+                    style="width:100%; display:none;">Verify & Login</button>
+                <button type="button" class="btn-secondary full-width" id="back-to-login"
+                    style="width:100%;">Back</button>
             </form>
         </div>
     </div>
+
+    <!-- Add Client Modal -->
+    <dialog id="new-client-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Add New Client</h3>
+                <button class="icon-btn close-modal">×</button>
+            </div>
+            <form id="new-client-form">
+                <div class="form-group">
+                    <label>Client / Company Name</label>
+                    <input type="text" name="name" required>
+                </div>
+                <div class="form-group">
+                    <label>Contact Email</label>
+                    <input type="email" name="email">
+                </div>
+                <div class="form-group">
+                    <label>Notes</label>
+                    <textarea name="notes" rows="3"
+                        style="width:100%; padding:12px; border:1px solid var(--border-color); border-radius:8px;"></textarea>
+                </div>
+                <div class="modal-actions">
+                    <button type="submit" class="btn-primary">Add Client</button>
+                </div>
+            </form>
+        </div>
+    </dialog>
 
     <!-- New Project Modal -->
     <dialog id="new-project-modal" class="modal">
