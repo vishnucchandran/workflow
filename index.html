@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Workflow - Designer Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container">
+        <aside class="sidebar">
+            <div class="logo">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M2 17L12 22L22 17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span>Flow</span>
+            </div>
+            <nav class="nav-menu">
+                <a href="#" class="nav-item active">
+                    <span class="icon">⊞</span> Dashboard
+                </a>
+                <a href="#" class="nav-item">
+                    <span class="icon">folder</span> Projects
+                </a>
+                <a href="#" class="nav-item">
+                    <span class="icon">image</span> Assets
+                </a>
+                <a href="#" class="nav-item">
+                    <span class="icon">users</span> Clients
+                </a>
+                <a href="#" class="nav-item">
+                    <span class="icon">settings</span> Settings
+                </a>
+            </nav>
+            <div class="user-profile">
+                <div class="avatar">AD</div>
+                <div class="user-info">
+                    <span class="name">Alex D.</span>
+                    <span class="role">Snr. Designer</span>
+                </div>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <header class="top-bar">
+                <h1>Overview</h1>
+                <div class="actions">
+                    <button class="btn-secondary">Filtered by: Active</button>
+                    <button class="btn-primary">+ New Project</button>
+                </div>
+            </header>
+
+            <div class="dashboard-grid">
+                <!-- Project Section -->
+                <section class="projects-section">
+                    <div class="section-header">
+                        <h2>Active Projects</h2>
+                        <a href="#" class="view-all">View All</a>
+                    </div>
+                    
+                    <div class="project-cards-container" id="project-list">
+                        <!-- Projects injected via JS -->
+                    </div>
+                </section>
+
+                <aside class="right-panel">
+                    <!-- Asset Upload -->
+                    <div class="card asset-upload">
+                        <div class="card-header">
+                            <h3>Quick Upload</h3>
+                            <button class="icon-btn">•••</button>
+                        </div>
+                        <div class="drop-zone" id="drop-zone">
+                            <div class="upload-icon">cloud_upload</div>
+                            <p>Drag & drop assets here<br>or <span class="link">browse</span></p>
+                        </div>
+                        <ul class="recent-uploads" id="recent-uploads">
+                            <!-- Recent uploads injected via JS -->
+                        </ul>
+                    </div>
+
+                    <!-- Client Feedback -->
+                    <div class="card feedback-stream">
+                        <div class="card-header">
+                            <h3>Client Feedback</h3>
+                            <span class="badge">3 New</span>
+                        </div>
+                        <div class="feedback-list" id="feedback-list">
+                            <!-- Feedback injected via JS -->
+                        </div>
+                    </div>
+                </aside>
+            </div>
+        </main>
+    </div>
+    <script src="app.js"></script>
+</body>
+</html>
